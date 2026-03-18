@@ -1,0 +1,16 @@
+{
+  "skin_id": "SCIFI-v1",
+  "world": "サイバーパンク2XXX",
+  "mappings": {
+    "TRANSPORT_ANIMAL_H01": { "label": "ホバーバイク", "icon": "🏍️", "color": "#00FFFF" },
+    "TRANSPORT_VEHICLE_W01": { "label": "輸送ドローン", "icon": "🚁", "color": "#00FF7F" },
+    "WEAPON_SWORD_L01": { "label": "高周波ブレード・長谷部", "icon": "⚡", "color": "#E0E0E0" },
+    "WEAPON_CANNON_B01": { "label": "レールガン", "icon": "🔫", "color": "#1C1C1C" },
+    "CONSUMABLE_FOOD_R01": { "label": "栄養カプセル", "icon": "💊", "color": "#7FFF00" },
+    "CONSUMABLE_AMMO_G01": { "label": "エネルギーセル", "icon": "🔋", "color": "#FF4500" },
+    "CULTURE_TEABOWL_R01": { "label": "レジェンドチップ", "icon": "💾", "color": "#00BFFF" },
+    "CONTAINER_BOX_W01": { "label": "セキュアコンテナ", "icon": "🗃️", "color": "#2F4F4F" },
+    "STRUCTURE_WALL_C01": { "label": "フォースフィールド発生装置", "icon": "🛡️", "color": "#4169E1" },
+    "STRUCTURE_SIGNAL_S01": { "label": "衛星アップリンク", "icon": "📡", "color": "#FF1493" }
+  }
+}

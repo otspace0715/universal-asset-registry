@@ -1,0 +1,78 @@
+[
+  {
+    "synergy_id": "SYN-001",
+    "name": "騎馬陣形",
+    "condition": {
+      "type": "same_territory",
+      "items": ["UAR-ITEM-001-STALLION", "UAR-ITEM-001-STALLION", "UAR-ITEM-001-STALLION"]
+    },
+    "effect": {
+      "on_territory": [{ "type": "cavalry_charge_unlock", "value": 1 }],
+      "description": "3頭以上の馬が同一領地に存在する時、騎馬突撃が解放される"
+    }
+  },
+  {
+    "synergy_id": "SYN-002",
+    "name": "不落城",
+    "condition": {
+      "type": "same_territory",
+      "items": ["UAR-ITEM-005-CASTLE-WALL", "UAR-ITEM-006-CANNON", "UAR-ITEM-009-SIGNAL-FIRE"]
+    },
+    "effect": {
+      "on_territory": [
+        { "type": "invincible_fortress_flag", "value": 1 },
+        { "type": "defense_bonus", "value": 50 },
+        { "type": "diplomatic_pressure", "value": 20 }
+      ],
+      "description": "城壁＋大筒＋狼煙台が揃うと「不落城」判定。外交カードとして機能"
+    }
+  },
+  {
+    "synergy_id": "SYN-003",
+    "name": "茶会外交",
+    "condition": {
+      "type": "same_territory",
+      "items": ["UAR-ITEM-007-TEA-BOWL"]
+    },
+    "effect": {
+      "on_territory": [{ "type": "bushi_card_visit_event", "value": 1 }],
+      "description": "茶碗が領地にある時、特定武将カードの訪問イベントがトリガーされる可能性がある"
+    }
+  },
+  {
+    "synergy_id": "SYN-004",
+    "name": "火矢射撃",
+    "condition": {
+      "type": "same_territory",
+      "items": ["UAR-ITEM-006-CANNON", "UAR-ITEM-010-GUNPOWDER"]
+    },
+    "effect": {
+      "on_territory": [{ "type": "fire_attack_unlock", "value": 1 }, { "type": "siege_power_bonus", "value": 20 }],
+      "description": "大筒と火薬が同一領地にある時、火攻めが解放される"
+    }
+  },
+  {
+    "synergy_id": "SYN-005",
+    "name": "補給路",
+    "condition": {
+      "type": "same_territory",
+      "items": ["UAR-ITEM-002-WAGON", "UAR-ITEM-004-RICE-BALE"]
+    },
+    "effect": {
+      "on_territory": [{ "type": "supply_line_active", "value": 1 }, { "type": "troop_stamina_recovery", "value": 1.5 }],
+      "description": "荷馬車に米俵が積まれた状態で領地にある時、補給路として機能し兵糧補給が自動化"
+    }
+  },
+  {
+    "synergy_id": "SYN-006",
+    "name": "早馬通信網",
+    "condition": {
+      "type": "adjacent_territory",
+      "items": ["UAR-ITEM-009-SIGNAL-FIRE", "UAR-ITEM-001-STALLION"]
+    },
+    "effect": {
+      "on_territory": [{ "type": "cross_border_alert", "value": 1 }, { "type": "information_range_bonus", "value": 2 }],
+      "description": "狼煙台と早馬が隣接する領地にある時、情報伝達が国境を越えてリアルタイム化"
+    }
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "skin_id": "SENGOKU-v1",
+  "world": "戦国時代",
+  "mappings": {
+    "TRANSPORT_ANIMAL_H01": { "label": "早馬", "icon": "🐎", "color": "#8B4513" },
+    "TRANSPORT_VEHICLE_W01": { "label": "荷馬車", "icon": "🛖", "color": "#A0522D" },
+    "WEAPON_SWORD_L01": { "label": "名刀・へし切長谷部", "icon": "⚔️", "color": "#C0C0C0" },
+    "WEAPON_CANNON_B01": { "label": "大筒", "icon": "💣", "color": "#696969" },
+    "CONSUMABLE_FOOD_R01": { "label": "米俵", "icon": "🌾", "color": "#DAA520" },
+    "CONSUMABLE_AMMO_G01": { "label": "火薬", "icon": "🧨", "color": "#FF4500" },
+    "CULTURE_TEABOWL_R01": { "label": "茶碗（利休作）", "icon": "🍵", "color": "#8FBC8F" },
+    "CONTAINER_BOX_W01": { "label": "木箱", "icon": "📦", "color": "#D2691E" },
+    "STRUCTURE_WALL_C01": { "label": "城壁", "icon": "🏯", "color": "#708090" },
+    "STRUCTURE_SIGNAL_S01": { "label": "狼煙台", "icon": "🔥", "color": "#FF6347" }
+  }
+}

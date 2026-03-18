@@ -1,0 +1,16 @@
+{
+  "skin_id": "FANTASY-v1",
+  "world": "ファンタジー王国",
+  "mappings": {
+    "TRANSPORT_ANIMAL_H01": { "label": "ユニコーン", "icon": "🦄", "color": "#9370DB" },
+    "TRANSPORT_VEHICLE_W01": { "label": "魔法の馬車", "icon": "🪄", "color": "#6A5ACD" },
+    "WEAPON_SWORD_L01": { "label": "伝説の聖剣", "icon": "🗡️", "color": "#FFD700" },
+    "WEAPON_CANNON_B01": { "label": "魔法砲台", "icon": "🔮", "color": "#4B0082" },
+    "CONSUMABLE_FOOD_R01": { "label": "魔法の穀物袋", "icon": "🌟", "color": "#32CD32" },
+    "CONSUMABLE_AMMO_G01": { "label": "魔法の粉", "icon": "✨", "color": "#FF69B4" },
+    "CULTURE_TEABOWL_R01": { "label": "賢者の杯", "icon": "🏺", "color": "#20B2AA" },
+    "CONTAINER_BOX_W01": { "label": "魔法の宝箱", "icon": "🎁", "color": "#8B0000" },
+    "STRUCTURE_WALL_C01": { "label": "魔法の城壁", "icon": "🏰", "color": "#4682B4" },
+    "STRUCTURE_SIGNAL_S01": { "label": "魔法の灯台", "icon": "🗼", "color": "#FF8C00" }
+  }
+}

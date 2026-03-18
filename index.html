@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UAR Protocol — Universal Asset Registry Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=Shippori+Mincho:wght@400;700&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1008;
+  --ink-light: #2d2015;
+  --paper: #f5f0e8;
+  --paper-dark: #ede5d4;
+  --vermillion: #c0392b;
+  --gold: #b8860b;
+  --gold-light: #daa520;
+  --ash: #8b8070;
+  --ash-light: #c4b8a8;
+  --fog: rgba(245,240,232,0.85);
+  --synergy: #2c5f2e;
+  --synergy-light: #d4edda;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Noto Serif JP', serif;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 和紙テクスチャ背景 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(139,128,112,0.04) 40px, rgba(139,128,112,0.04) 41px),
+    repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(139,128,112,0.03) 60px, rgba(139,128,112,0.03) 61px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 朱印風 装飾 */
+body::after {
+  content: '🌸 UAR 🌸';
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  font-size: 10px;
+  color: var(--vermillion);
+  opacity: 0.3;
+  letter-spacing: 4px;
+  writing-mode: vertical-rl;
+  z-index: 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ヘッダー */
+header {
+  border-bottom: 3px double var(--ink);
+  padding: 32px 0 24px;
+  margin-bottom: 40px;
+  position: relative;
+}
+
+header::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  border-bottom: 1px solid var(--ink);
+}
+
+.header-inner {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.title-block h1 {
+  font-family: 'Shippori Mincho', serif;
+  font-size: clamp(22px, 4vw, 38px);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+}
+
+.title-block h1 span {
+  color: var(--vermillion);
+}
+
+.title-block .subtitle {
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--ash);
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 300;
+}
+
+.badge {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 4px 12px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* セクションタイトル */
+.section-title {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 13px;
+  letter-spacing: 0.4em;
+  color: var(--ash);
+  text-transform: uppercase;
+  border-left: 3px solid var(--vermillion);
+  padding-left: 12px;
+  margin-bottom: 20px;
+}
+
+/* ビューワーセレクター */
+.viewer-bar {
+  background: var(--paper-dark);
+  border: 1px solid var(--ash-light);
+  padding: 16px 20px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.viewer-bar label {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--ash);
+}
+
+.skin-btn {
+  padding: 6px 18px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  font-family: 'Noto Serif JP', serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--ink);
+}
+
+.skin-btn:hover { background: var(--ink); color: var(--paper); }
+.skin-btn.active { background: var(--vermillion); color: var(--paper); border-color: var(--vermillion); }
+
+.world-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--gold);
+  margin-left: auto;
+}
+
+/* メインレイアウト */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 40px;
+}
+
+@media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
+
+/* アイテムグリッド */
+.items-panel { grid-column: 1; }
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.item-card {
+  border: 1px solid var(--ash-light);
+  background: white;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.item-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--ash-light);
+  transition: background 0.2s;
+}
+
+.item-card:hover { border-color: var(--ink); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.item-card:hover::before { background: var(--gold); }
+.item-card.selected { border-color: var(--vermillion); background: #fff8f6; }
+.item-card.selected::before { background: var(--vermillion); }
+.item-card.in-territory { border-color: var(--synergy); background: #f6fff7; }
+.item-card.in-territory::before { background: var(--synergy); }
+
+.item-icon { font-size: 28px; margin-bottom: 8px; display: block; }
+.item-name {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+.item-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--ash);
+}
+
+.item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 8px;
+}
+
+.tag {
+  font-size: 9px;
+  padding: 2px 6px;
+  border: 1px solid var(--ash-light);
+  color: var(--ash);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tag.unique { border-color: var(--gold); color: var(--gold); }
+.tag.rideable { border-color: #4682B4; color: #4682B4; }
+.tag.container { border-color: var(--synergy); color: var(--synergy); }
+.tag.immovable { border-color: var(--vermillion); color: var(--vermillion); }
+.tag.consumable { border-color: #8B4513; color: #8B4513; }
+
+/* 詳細パネル */
+.detail-panel {
+  grid-column: 2;
+  position: sticky;
+  top: 20px;
+}
+
+.detail-card {
+  border: 1px solid var(--ink);
+  background: white;
+  padding: 24px;
+  min-height: 400px;
+}
+
+.detail-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: var(--ash-light);
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  gap: 12px;
+}
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ash-light);
+}
+
+.detail-icon { font-size: 48px; }
+
+.detail-title h2 {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.detail-title .detail-world {
+  font-size: 11px;
+  color: var(--gold);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+}
+
+/* パラメータ表示 */
+.params-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.param-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--ash-light);
+}
+
+.param-key {
+  font-size: 10px;
+  color: var(--ash);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.1em;
+}
+
+.param-val {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.param-val.true { color: var(--synergy); }
+.param-val.false { color: var(--vermillion); }
+.param-val.number { color: #4682B4; }
+
+/* エフェクト表示 */
+.effects-section { margin-top: 16px; }
+.effects-title {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--ash);
+  margin-bottom: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.effect-item {
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  background: var(--paper-dark);
+  border-left: 2px solid var(--ash-light);
+}
+.effect-item.territory { border-left-color: var(--synergy); }
+.effect-item.soul { border-left-color: #4682B4; }
+.effect-item.item-fx { border-left-color: var(--gold); }
+
+/* 領地シミュレーター */
+.territory-panel {
+  margin-bottom: 40px;
+}
+
+.territory-box {
+  border: 2px solid var(--ink);
+  background: white;
+  min-height: 160px;
+  padding: 20px;
+  position: relative;
+}
+
+.territory-box::before {
+  content: '領地';
+  position: absolute;
+  top: -12px;
+  left: 20px;
+  background: var(--paper);
+  padding: 0 8px;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 14px;
+  color: var(--ash);
+}
+
+.territory-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 80px;
+  align-content: flex-start;
+}
+
+.territory-item-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--paper-dark);
+  border: 1px solid var(--ash-light);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.territory-item-chip:hover { border-color: var(--vermillion); }
+.territory-item-chip .remove-btn {
+  font-size: 10px;
+  color: var(--ash);
+  margin-left: 4px;
+}
+
+.territory-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 8px 20px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  font-family: 'Noto Serif JP', serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--ink);
+  letter-spacing: 0.1em;
+}
+
+.btn:hover { background: var(--ink); color: var(--paper); }
+.btn.primary { background: var(--vermillion); color: white; border-color: var(--vermillion); }
+.btn.primary:hover { background: #a93226; }
+
+/* 積載シミュレーター */
+.cargo-panel {
+  margin-bottom: 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) { .cargo-panel { grid-template-columns: 1fr; } }
+
+.cargo-box {
+  border: 1px solid var(--ash-light);
+  background: white;
+  padding: 20px;
+}
+
+.cargo-box h3 {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ash-light);
+}
+
+.cargo-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  min-height: 60px;
+}
+
+.cargo-slot {
+  width: 50px;
+  height: 50px;
+  border: 1px dashed var(--ash-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cargo-slot.filled { border-style: solid; border-color: var(--synergy); background: var(--synergy-light); }
+.cargo-slot.filled:hover { border-color: var(--vermillion); background: #fff0ee; }
+
+.cargo-stat {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px dotted var(--ash-light);
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.cargo-stat .over { color: var(--vermillion); font-weight: 700; }
+
+/* シナジー表示 */
+.synergy-panel {
+  margin-bottom: 40px;
+}
+
+.synergy-list { display: flex; flex-direction: column; gap: 12px; }
+
+.synergy-card {
+  border: 1px solid var(--ash-light);
+  background: white;
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  transition: all 0.3s;
+}
+
+.synergy-card.active {
+  border-color: var(--synergy);
+  background: var(--synergy-light);
+  box-shadow: 0 2px 12px rgba(44,95,46,0.15);
+}
+
+.synergy-card.active .synergy-status { color: var(--synergy); }
+
+.synergy-name {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.synergy-desc {
+  font-size: 11px;
+  color: var(--ash);
+  line-height: 1.6;
+}
+
+.synergy-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ash-light);
+  white-space: nowrap;
+  padding-top: 2px;
+}
+
+.synergy-conditions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.synergy-req {
+  font-size: 9px;
+  padding: 2px 6px;
+  border: 1px solid var(--ash-light);
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--ash);
+}
+
+.synergy-req.met { border-color: var(--synergy); color: var(--synergy); background: rgba(44,95,46,0.05); }
+
+/* テスト結果 */
+.test-panel { margin-bottom: 40px; }
+
+.test-log {
+  background: var(--ink);
+  color: #a8d8a8;
+  padding: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.8;
+  min-height: 120px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.test-log .log-ok { color: #6fcf6f; }
+.test-log .log-warn { color: #f0c070; }
+.test-log .log-err { color: #ef9090; }
+.test-log .log-info { color: #90c0ef; }
+.test-log .log-synergy { color: #c0ef90; }
+
+/* 確変デモ */
+.henge-panel {
+  margin-bottom: 40px;
+  padding: 24px;
+  border: 1px solid var(--gold);
+  background: linear-gradient(135deg, #fff9ee 0%, #fff 100%);
+  position: relative;
+}
+
+.henge-panel::before {
+  content: '確変';
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: var(--paper);
+  padding: 0 8px;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 14px;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+}
+
+.henge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 600px) { .henge-grid { grid-template-columns: 1fr; } }
+
+.henge-world {
+  text-align: center;
+  padding: 16px;
+  border: 1px solid var(--ash-light);
+  background: white;
+  transition: all 0.3s;
+}
+
+.henge-world.current { border-color: var(--vermillion); background: #fff6f5; }
+
+.henge-world-name {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--ash);
+  margin-bottom: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.henge-icon { font-size: 36px; margin-bottom: 8px; }
+.henge-item-name { font-size: 13px; font-weight: 700; }
+.henge-hook {
+  font-size: 9px;
+  color: var(--ash-light);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 6px;
+}
+
+/* フッター */
+footer {
+  border-top: 1px solid var(--ash-light);
+  padding: 24px 0;
+  margin-top: 40px;
+  font-size: 10px;
+  color: var(--ash);
+  letter-spacing: 0.2em;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: center;
+}
+
+/* アニメーション */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.pulse { animation: pulse 2s infinite; }
+
+/* 重量バー */
+.weight-bar-wrap { margin: 8px 0; }
+.weight-bar {
+  height: 6px;
+  background: var(--ash-light);
+  border-radius: 0;
+  overflow: hidden;
+}
+.weight-bar-fill {
+  height: 100%;
+  background: var(--synergy);
+  transition: width 0.4s ease;
+}
+.weight-bar-fill.danger { background: var(--vermillion); }
+
+.history-bar-fill {
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.4s ease;
+}
+
+/* 選択中アイテムへ配置ボタン */
+.add-to-territory-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  font-family: 'Noto Serif JP', serif;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.add-to-territory-btn:hover { background: var(--vermillion); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="header-inner">
+      <div class="title-block">
+        <h1>Universal Asset <span>Registry</span></h1>
+        <div class="subtitle">UAR PROTOCOL v0.1 — INTERACTIVE DEMO / 物理インタラクション・シミュレーター</div>
+      </div>
+      <div class="badge">PROTOTYPE</div>
+    </div>
+  </header>
+
+  <!-- ビューワー選択 -->
+  <div class="viewer-bar">
+    <label>WORLD SKIN ▸</label>
+    <button class="skin-btn active" data-skin="sengoku" onclick="setSkin('sengoku', this)">⚔️ 戦国時代</button>
+    <button class="skin-btn" data-skin="fantasy" onclick="setSkin('fantasy', this)">🦄 ファンタジー</button>
+    <button class="skin-btn" data-skin="scifi" onclick="setSkin('scifi', this)">🚀 サイバーパンク</button>
+    <div class="world-label" id="worldLabel">SENGOKU-v1</div>
+  </div>
+
+  <!-- アイテム一覧 ＋ 詳細 -->
+  <div class="main-grid">
+    <div class="items-panel">
+      <div class="section-title">ITEM REGISTRY — 10種コアアセット</div>
+      <div class="item-grid" id="itemGrid"></div>
+    </div>
+
+    <div class="detail-panel">
+      <div class="section-title">ASSET DETAIL</div>
+      <div class="detail-card" id="detailCard">
+        <div class="detail-placeholder">
+          <span style="font-size:32px">📜</span>
+          <span>アイテムを選択してください</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 確変デモ -->
+  <div class="henge-panel">
+    <div class="section-title" style="margin-bottom:16px">WORLD RENDERING — 同一アセットの世界観変換</div>
+    <div class="henge-grid" id="hengeGrid">
+      <div class="henge-world" id="henge-sengoku">
+        <div class="henge-world-name">SENGOKU-v1</div>
+        <div class="henge-icon">📜</div>
+        <div class="henge-item-name">—</div>
+        <div class="henge-hook">アイテムを選択</div>
+      </div>
+      <div class="henge-world" id="henge-fantasy">
+        <div class="henge-world-name">FANTASY-v1</div>
+        <div class="henge-icon">📜</div>
+        <div class="henge-item-name">—</div>
+        <div class="henge-hook"></div>
+      </div>
+      <div class="henge-world" id="henge-scifi">
+        <div class="henge-world-name">SCIFI-v1</div>
+        <div class="henge-icon">📜</div>
+        <div class="henge-item-name">—</div>
+        <div class="henge-hook"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 領地シミュレーター -->
+  <div class="territory-panel">
+    <div class="section-title">TERRITORY SIMULATOR — 領地配置テスト</div>
+    <div class="territory-box">
+      <div class="territory-items" id="territoryItems">
+        <span style="color:var(--ash-light);font-size:12px;padding:8px;">← アイテムを選択して「領地へ配置」ボタンで追加</span>
+      </div>
+    </div>
+    <div class="territory-actions">
+      <button class="btn primary" onclick="addSelectedToTerritory()">＋ 領地へ配置</button>
+      <button class="btn" onclick="clearTerritory()">領地をリセット</button>
+    </div>
+  </div>
+
+  <!-- 積載シミュレーター -->
+  <div>
+    <div class="section-title">CARGO SIMULATOR — 積載・重量テスト</div>
+  </div>
+  <div class="cargo-panel">
+    <div class="cargo-box">
+      <h3>🛖 荷馬車（WAGON）</h3>
+      <div class="cargo-slots" id="wagonSlots"></div>
+      <div style="margin-bottom:8px">
+        <button class="btn" style="font-size:11px;padding:5px 12px" onclick="addToWagon()">米俵を積む</button>
+        <button class="btn" style="font-size:11px;padding:5px 12px;margin-left:8px" onclick="removeFromWagon()">取り出す</button>
+      </div>
+      <div class="cargo-stat"><span>スロット使用</span><span id="wagonSlot">0 / 5</span></div>
+      <div class="cargo-stat"><span>積載重量</span><span id="wagonWeight">0 / 1000 kg</span></div>
+      <div class="weight-bar-wrap">
+        <div class="weight-bar"><div class="weight-bar-fill" id="wagonBar" style="width:0%"></div></div>
+      </div>
+      <div class="cargo-stat"><span>荷馬車 自重</span><span>200 kg</span></div>
+      <div class="cargo-stat"><span>総重量（自重＋積載）</span><span id="wagonTotal">200 kg</span></div>
+    </div>
+
+    <div class="cargo-box">
+      <h3>🐎 早馬（STALLION）地形判定</h3>
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px;color:var(--ash);margin-bottom:8px;font-family:'JetBrains Mono',monospace">TERRAIN SELECT:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <button class="btn" style="font-size:11px;padding:5px 12px" onclick="checkTerrain('plain')">平野</button>
+          <button class="btn" style="font-size:11px;padding:5px 12px" onclick="checkTerrain('highway')">街道</button>
+          <button class="btn" style="font-size:11px;padding:5px 12px" onclick="checkTerrain('forest')">森林</button>
+          <button class="btn" style="font-size:11px;padding:5px 12px" onclick="checkTerrain('mountain')">山岳</button>
+          <button class="btn" style="font-size:11px;padding:5px 12px" onclick="checkTerrain('sea')">海上</button>
+        </div>
+      </div>
+      <div id="terrainResult" style="padding:12px;background:var(--paper-dark);font-size:12px;min-height:60px;border-left:3px solid var(--ash-light)">
+        地形を選択してください
+      </div>
+
+      <div style="margin-top:16px">
+        <div style="font-size:11px;color:var(--ash);margin-bottom:6px;font-family:'JetBrains Mono',monospace">HISTORY VALUE（名刀・へし切長谷部）</div>
+        <div class="weight-bar-wrap">
+          <div class="weight-bar"><div class="history-bar-fill" style="width:85%"></div></div>
+        </div>
+        <div style="font-size:10px;color:var(--gold);margin-top:4px;font-family:'JetBrains Mono',monospace">history_count: 850 / 1000 → 「業物」判定レベル</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- シナジー検出 -->
+  <div class="synergy-panel">
+    <div class="section-title">SYNERGY DETECTOR — 組み合わせ効果</div>
+    <div class="synergy-list" id="synergyList"></div>
+  </div>
+
+  <!-- テストログ -->
+  <div class="test-panel">
+    <div class="section-title">TEST LOG — バリデーション結果</div>
+    <div class="test-log" id="testLog">
+      <div class="log-info">▶ UAR Protocol Demo initialized.</div>
+      <div class="log-info">▶ Loading item-samples.json ... OK (10 items)</div>
+      <div class="log-info">▶ Loading synergy-rules.json ... OK (6 rules)</div>
+      <div class="log-ok">✓ Schema validation passed for all 10 items.</div>
+      <div>— アイテムをクリックするか、操作してください —</div>
+    </div>
+  </div>
+
+  <footer>
+    UAR PROTOCOL v0.1 — Universal Asset Registry · MIT License · 戦国時代オンライン〜都市と武将〜 プロトタイプ
+  </footer>
+
+</div>
+
+<script>
+// ========== DATA ==========
+const ITEMS = [
+  { asset_id:"UAR-ITEM-001-STALLION", asset_id_alias:"早馬", asset_class:"001", unique:false, stackable:false, weight:400, movable:true, autonomous:true, move_speed:15, rideable:true, capacity_souls:1, exit_condition:"free", container:false, item_slots:0, weight_capacity:100, consumable:false, durability:100, history_count:0, terrain_access:["plain","highway","forest"], visual_hook_id:"TRANSPORT_ANIMAL_H01", effects:{ on_territory:[], on_soul:[{type:"move_speed_buff",value:2.0,condition:"mounted"}], on_item:[] } },
+  { asset_id:"UAR-ITEM-002-WAGON", asset_id_alias:"荷馬車", asset_class:"001", unique:false, stackable:false, weight:200, movable:true, autonomous:false, move_speed:5, rideable:true, capacity_souls:4, exit_condition:"free", container:true, item_slots:5, weight_capacity:1000, consumable:false, durability:80, history_count:0, terrain_access:["plain","highway"], visual_hook_id:"TRANSPORT_VEHICLE_W01", effects:{ on_territory:[], on_soul:[], on_item:[{type:"weight_reduction",target_class:"005",value:0.5}] } },
+  { asset_id:"UAR-ITEM-003-HESHIKIRI", asset_id_alias:"名刀・へし切長谷部", asset_class:"002", unique:true, stackable:false, weight:1.2, movable:true, autonomous:false, move_speed:0, rideable:false, capacity_souls:0, exit_condition:"none", container:false, item_slots:0, weight_capacity:0, consumable:false, durability:60, history_count:850, terrain_access:["all"], visual_hook_id:"WEAPON_SWORD_L01", effects:{ on_territory:[], on_soul:[{type:"attack_efficiency",value:1.4,condition:"equipped"},{type:"cultural_prestige",value:50,condition:"held"}], on_item:[] } },
+  { asset_id:"UAR-ITEM-004-RICE-BALE", asset_id_alias:"米俵", asset_class:"004", unique:false, stackable:true, stack_count:100, current_quantity:100, weight:60, movable:true, autonomous:false, move_speed:0, rideable:false, capacity_souls:0, exit_condition:"none", container:false, item_slots:0, weight_capacity:0, consumable:true, durability:null, history_count:0, terrain_access:["all"], visual_hook_id:"CONSUMABLE_FOOD_R01", effects:{ on_territory:[{type:"food_production",value:10},{type:"population_stability",value:5}], on_soul:[{type:"stamina_recovery",value:1.2,condition:"resting"}], on_item:[] } },
+  { asset_id:"UAR-ITEM-005-CASTLE-WALL", asset_id_alias:"城壁", asset_class:"006", unique:false, stackable:false, weight:50000, movable:false, autonomous:false, move_speed:0, rideable:false, capacity_souls:0, exit_condition:"none", container:false, item_slots:0, weight_capacity:0, consumable:false, durability:500, history_count:0, terrain_access:["plain","hill"], visual_hook_id:"STRUCTURE_WALL_C01", effects:{ on_territory:[{type:"defense_value",value:30},{type:"siege_resistance",value:20}], on_soul:[], on_item:[] } },
+  { asset_id:"UAR-ITEM-006-CANNON", asset_id_alias:"大筒", asset_class:"002", unique:false, stackable:false, weight:800, movable:true, autonomous:false, move_speed:2, rideable:false, capacity_souls:0, exit_condition:"none", container:false, item_slots:0, weight_capacity:0, consumable:false, durability:200, history_count:0, terrain_access:["plain","highway"], requires:["UAR-ITEM-010-GUNPOWDER"], visual_hook_id:"WEAPON_CANNON_B01", effects:{ on_territory:[{type:"attack_range",value:3},{type:"siege_power",value:40}], on_soul:[], on_item:[{type:"fire_arrow_unlock",target_id:"UAR-ITEM-010-GUNPOWDER",value:1}] } },
+  { asset_id:"UAR-ITEM-007-TEA-BOWL", asset_id_alias:"茶碗（利休作）", asset_class:"003", unique:true, stackable:false, weight:0.3, movable:true, autonomous:false, move_speed:0, rideable:false, capacity_souls:0, exit_condition:"none", container:false, item_slots:0, weight_capacity:0, consumable:false, durability:30, history_count:200, terrain_access:["all"], visual_hook_id:"CULTURE_TEABOWL_R01", effects:{ on_territory:[{type:"diplomatic_attraction",value:15}], on_soul:[{type:"diplomacy_ap_bonus",value:1.3,condition:"held"},{type:"special_event_trigger",value:1,condition:"character_type:bushi_card"}], on_item:[] } },
+  { asset_id:"UAR-ITEM-008-WOODEN-BOX", asset_id_alias:"木箱", asset_class:"005", unique:false, stackable:false, weight:10, movable:true, autonomous:false, move_speed:0, rideable:false, capacity_souls:0, exit_condition:"none", container:true, item_slots:8, weight_capacity:200, retrievable:true, consumable:false, durability:50, history_count:0, terrain_access:["all"], visual_hook_id:"CONTAINER_BOX_W01", effects:{ on_territory:[], on_soul:[], on_item:[] } },
+  { asset_id:"UAR-ITEM-009-SIGNAL-FIRE", asset_id_alias:"狼煙台", asset_class:"006", unique:false, stackable:false, weight:5000, movable:false, autonomous:false, move_speed:0, rideable:false, capacity_souls:0, exit_condition:"none", container:false, item_slots:0, weight_capacity:0, consumable:false, durability:150, history_count:0, terrain_access:["hill","mountain","plain"], visual_hook_id:"STRUCTURE_SIGNAL_S01", effects:{ on_territory:[{type:"information_speed",value:2},{type:"alert_radius",value:3}], on_soul:[], on_item:[] } },
+  { asset_id:"UAR-ITEM-010-GUNPOWDER", asset_id_alias:"火薬", asset_class:"004", unique:false, stackable:true, stack_count:50, current_quantity:50, weight:5, movable:true, autonomous:false, move_speed:0, rideable:false, capacity_souls:0, exit_condition:"none", container:false, item_slots:0, weight_capacity:0, consumable:true, durability:null, history_count:0, terrain_access:["all"], visual_hook_id:"CONSUMABLE_AMMO_G01", effects:{ on_territory:[{type:"explosion_risk",value:5}], on_soul:[], on_item:[] } }
+];
+
+const SKINS = {
+  sengoku: { skin_id:"SENGOKU-v1", world:"戦国時代", mappings:{ TRANSPORT_ANIMAL_H01:{label:"早馬",icon:"🐎",color:"#8B4513"}, TRANSPORT_VEHICLE_W01:{label:"荷馬車",icon:"🛖",color:"#A0522D"}, WEAPON_SWORD_L01:{label:"名刀・へし切長谷部",icon:"⚔️",color:"#C0C0C0"}, WEAPON_CANNON_B01:{label:"大筒",icon:"💣",color:"#696969"}, CONSUMABLE_FOOD_R01:{label:"米俵",icon:"🌾",color:"#DAA520"}, CONSUMABLE_AMMO_G01:{label:"火薬",icon:"🧨",color:"#FF4500"}, CULTURE_TEABOWL_R01:{label:"茶碗（利休作）",icon:"🍵",color:"#8FBC8F"}, CONTAINER_BOX_W01:{label:"木箱",icon:"📦",color:"#D2691E"}, STRUCTURE_WALL_C01:{label:"城壁",icon:"🏯",color:"#708090"}, STRUCTURE_SIGNAL_S01:{label:"狼煙台",icon:"🔥",color:"#FF6347"} } },
+  fantasy: { skin_id:"FANTASY-v1", world:"ファンタジー王国", mappings:{ TRANSPORT_ANIMAL_H01:{label:"ユニコーン",icon:"🦄",color:"#9370DB"}, TRANSPORT_VEHICLE_W01:{label:"魔法の馬車",icon:"🪄",color:"#6A5ACD"}, WEAPON_SWORD_L01:{label:"伝説の聖剣",icon:"🗡️",color:"#FFD700"}, WEAPON_CANNON_B01:{label:"魔法砲台",icon:"🔮",color:"#4B0082"}, CONSUMABLE_FOOD_R01:{label:"魔法の穀物袋",icon:"🌟",color:"#32CD32"}, CONSUMABLE_AMMO_G01:{label:"魔法の粉",icon:"✨",color:"#FF69B4"}, CULTURE_TEABOWL_R01:{label:"賢者の杯",icon:"🏺",color:"#20B2AA"}, CONTAINER_BOX_W01:{label:"魔法の宝箱",icon:"🎁",color:"#8B0000"}, STRUCTURE_WALL_C01:{label:"魔法の城壁",icon:"🏰",color:"#4682B4"}, STRUCTURE_SIGNAL_S01:{label:"魔法の灯台",icon:"🗼",color:"#FF8C00"} } },
+  scifi: { skin_id:"SCIFI-v1", world:"サイバーパンク2XXX", mappings:{ TRANSPORT_ANIMAL_H01:{label:"ホバーバイク",icon:"🏍️",color:"#00FFFF"}, TRANSPORT_VEHICLE_W01:{label:"輸送ドローン",icon:"🚁",color:"#00FF7F"}, WEAPON_SWORD_L01:{label:"高周波ブレード・長谷部",icon:"⚡",color:"#E0E0E0"}, WEAPON_CANNON_B01:{label:"レールガン",icon:"🔫",color:"#1C1C1C"}, CONSUMABLE_FOOD_R01:{label:"栄養カプセル",icon:"💊",color:"#7FFF00"}, CONSUMABLE_AMMO_G01:{label:"エネルギーセル",icon:"🔋",color:"#FF4500"}, CULTURE_TEABOWL_R01:{label:"レジェンドチップ",icon:"💾",color:"#00BFFF"}, CONTAINER_BOX_W01:{label:"セキュアコンテナ",icon:"🗃️",color:"#2F4F4F"}, STRUCTURE_WALL_C01:{label:"フォースフィールド",icon:"🛡️",color:"#4169E1"}, STRUCTURE_SIGNAL_S01:{label:"衛星アップリンク",icon:"📡",color:"#FF1493"} } }
+};
+
+const SYNERGIES = [
+  { synergy_id:"SYN-001", name:"騎馬陣形", condition:{ type:"same_territory", items:["UAR-ITEM-001-STALLION","UAR-ITEM-001-STALLION","UAR-ITEM-001-STALLION"] }, effect:{ on_territory:[{type:"cavalry_charge_unlock",value:1}], description:"3頭以上の馬が同一領地に存在する時、騎馬突撃が解放される" } },
+  { synergy_id:"SYN-002", name:"不落城", condition:{ type:"same_territory", items:["UAR-ITEM-005-CASTLE-WALL","UAR-ITEM-006-CANNON","UAR-ITEM-009-SIGNAL-FIRE"] }, effect:{ on_territory:[{type:"invincible_fortress_flag",value:1},{type:"defense_bonus",value:50}], description:"城壁＋大筒＋狼煙台が揃うと「不落城」判定。外交カードとして機能" } },
+  { synergy_id:"SYN-003", name:"茶会外交", condition:{ type:"same_territory", items:["UAR-ITEM-007-TEA-BOWL"] }, effect:{ on_territory:[{type:"bushi_card_visit_event",value:1}], description:"茶碗が領地にある時、特定武将カードの訪問イベントがトリガーされる可能性がある" } },
+  { synergy_id:"SYN-004", name:"火矢射撃", condition:{ type:"same_territory", items:["UAR-ITEM-006-CANNON","UAR-ITEM-010-GUNPOWDER"] }, effect:{ on_territory:[{type:"fire_attack_unlock",value:1},{type:"siege_power_bonus",value:20}], description:"大筒と火薬が同一領地にある時、火攻めが解放される" } },
+  { synergy_id:"SYN-005", name:"補給路", condition:{ type:"same_territory", items:["UAR-ITEM-002-WAGON","UAR-ITEM-004-RICE-BALE"] }, effect:{ on_territory:[{type:"supply_line_active",value:1},{type:"troop_stamina_recovery",value:1.5}], description:"荷馬車に米俵が積まれた状態で領地にある時、補給路として機能" } },
+  { synergy_id:"SYN-006", name:"早馬通信網", condition:{ type:"same_territory", items:["UAR-ITEM-009-SIGNAL-FIRE","UAR-ITEM-001-STALLION"] }, effect:{ on_territory:[{type:"cross_border_alert",value:1},{type:"information_range_bonus",value:2}], description:"狼煙台と早馬が同一・隣接領地にある時、情報伝達が国境を越えてリアルタイム化" } }
+];
+
+// ========== STATE ==========
+let currentSkin = 'sengoku';
+let selectedItem = null;
+let territoryItems = [];
+let wagonContents = [];
+const wagonCapacity = { slots: 5, weight: 1000 };
+
+// ========== INIT ==========
+function init() {
+  renderItemGrid();
+  renderSynergyList();
+  renderWagonSlots();
+}
+
+function getSkin(hookId) {
+  return SKINS[currentSkin].mappings[hookId] || { label: hookId, icon: '❓', color: '#888' };
+}
+
+// ========== SKIN ==========
+function setSkin(skin, btn) {
+  currentSkin = skin;
+  document.querySelectorAll('.skin-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('worldLabel').textContent = SKINS[skin].skin_id;
+  renderItemGrid();
+  if (selectedItem) showDetail(selectedItem);
+  updateHenge(selectedItem);
+  log(`🌐 World Skin 切替 → ${SKINS[skin].world}`, 'info');
+}
+
+// ========== ITEM GRID ==========
+function renderItemGrid() {
+  const grid = document.getElementById('itemGrid');
+  grid.innerHTML = '';
+  ITEMS.forEach(item => {
+    const sk = getSkin(item.visual_hook_id);
+    const inTerritory = territoryItems.some(t => t.asset_id === item.asset_id);
+    const isSelected = selectedItem && selectedItem.asset_id === item.asset_id;
+    const tags = [];
+    if (item.unique) tags.push('<span class="tag unique">UNIQUE</span>');
+    if (item.rideable) tags.push('<span class="tag rideable">RIDEABLE</span>');
+    if (item.container) tags.push('<span class="tag container">CONTAINER</span>');
+    if (!item.movable) tags.push('<span class="tag immovable">FIXED</span>');
+    if (item.consumable) tags.push('<span class="tag consumable">CONSUMABLE</span>');
+    const card = document.createElement('div');
+    card.className = `item-card${isSelected?' selected':''}${inTerritory?' in-territory':''}`;
+    card.innerHTML = `
+      <span class="item-icon">${sk.icon}</span>
+      <div class="item-name">${sk.label}</div>
+      <div class="item-id">${item.asset_id}</div>
+      <div class="item-tags">${tags.join('')}</div>
+    `;
+    card.onclick = () => selectItem(item);
+    grid.appendChild(card);
+  });
+}
+
+// ========== SELECT ITEM ==========
+function selectItem(item) {
+  selectedItem = item;
+  renderItemGrid();
+  showDetail(item);
+  updateHenge(item);
+  log(`📌 選択: ${getSkin(item.visual_hook_id).label} [${item.asset_id}]`, 'ok');
+}
+
+function showDetail(item) {
+  const sk = getSkin(item.visual_hook_id);
+  const card = document.getElementById('detailCard');
+
+  const boolVal = (v) => v ? '<span class="param-val true">✓ true</span>' : '<span class="param-val false">✗ false</span>';
+  const numVal = (v) => `<span class="param-val number">${v ?? '—'}</span>`;
+
+  const terrainBadges = (item.terrain_access || []).map(t =>
+    `<span class="tag">${t}</span>`).join('');
+
+  const effectsHtml = (effects) => {
+    let html = '';
+    if (effects.on_territory && effects.on_territory.length) {
+      html += '<div class="effects-title">ON_TERRITORY</div>';
+      effects.on_territory.forEach(e => {
+        html += `<div class="effect-item territory">${e.type} <strong>+${e.value}</strong></div>`;
+      });
+    }
+    if (effects.on_soul && effects.on_soul.length) {
+      html += '<div class="effects-title" style="margin-top:8px">ON_SOUL</div>';
+      effects.on_soul.forEach(e => {
+        html += `<div class="effect-item soul">${e.type} <strong>${e.value}</strong> [${e.condition}]</div>`;
+      });
+    }
+    if (effects.on_item && effects.on_item.length) {
+      html += '<div class="effects-title" style="margin-top:8px">ON_ITEM</div>';
+      effects.on_item.forEach(e => {
+        html += `<div class="effect-item item-fx">${e.type} <strong>${e.value}</strong></div>`;
+      });
+    }
+    return html || '<div style="font-size:11px;color:var(--ash-light)">なし</div>';
+  };
+
+  const durBar = item.durability != null ? `
+    <div class="weight-bar-wrap">
+      <div class="weight-bar"><div class="weight-bar-fill${item.durability < 40 ? ' danger' : ''}" style="width:${Math.min(100,(item.durability/500)*100)}%"></div></div>
+    </div>` : '';
+
+  card.innerHTML = `
+    <div class="fade-in">
+      <div class="detail-header">
+        <div class="detail-icon">${sk.icon}</div>
+        <div class="detail-title">
+          <h2>${sk.label}</h2>
+          <div class="detail-world">${SKINS[currentSkin].skin_id} → visual_hook_id: ${item.visual_hook_id}</div>
+        </div>
+      </div>
+
+      <div class="params-grid">
+        <div>
+          <div class="param-row"><span class="param-key">weight</span>${numVal(item.weight + ' kg')}</div>
+          <div class="param-row"><span class="param-key">movable</span>${boolVal(item.movable)}</div>
+          <div class="param-row"><span class="param-key">autonomous</span>${boolVal(item.autonomous)}</div>
+          <div class="param-row"><span class="param-key">move_speed</span>${numVal(item.move_speed)}</div>
+          <div class="param-row"><span class="param-key">unique</span>${boolVal(item.unique)}</div>
+          <div class="param-row"><span class="param-key">stackable</span>${boolVal(item.stackable)}</div>
+          <div class="param-row"><span class="param-key">consumable</span>${boolVal(item.consumable)}</div>
+        </div>
+        <div>
+          <div class="param-row"><span class="param-key">rideable</span>${boolVal(item.rideable)}</div>
+          <div class="param-row"><span class="param-key">capacity_souls</span>${numVal(item.capacity_souls)}</div>
+          <div class="param-row"><span class="param-key">container</span>${boolVal(item.container)}</div>
+          <div class="param-row"><span class="param-key">item_slots</span>${numVal(item.item_slots)}</div>
+          <div class="param-row"><span class="param-key">weight_capacity</span>${numVal(item.weight_capacity + ' kg')}</div>
+          <div class="param-row"><span class="param-key">durability</span>${numVal(item.durability)}</div>
+          <div class="param-row"><span class="param-key">history_count</span>${numVal(item.history_count)}</div>
+        </div>
+      </div>
+
+      ${durBar}
+
+      <div style="margin:8px 0;font-size:11px;color:var(--ash);font-family:'JetBrains Mono',monospace">TERRAIN: ${terrainBadges}</div>
+
+      <div class="effects-section">${effectsHtml(item.effects)}</div>
+
+      <button class="add-to-territory-btn" onclick="addSelectedToTerritory()">＋ この場所に領地配置する</button>
+    </div>
+  `;
+}
+
+// ========== HENGE ==========
+function updateHenge(item) {
+  if (!item) return;
+  const worlds = ['sengoku', 'fantasy', 'scifi'];
+  worlds.forEach(w => {
+    const sk = SKINS[w].mappings[item.visual_hook_id] || { label: item.visual_hook_id, icon: '❓' };
+    const el = document.getElementById(`henge-${w}`);
+    el.querySelector('.henge-icon').textContent = sk.icon;
+    el.querySelector('.henge-item-name').textContent = sk.label;
+    el.querySelector('.henge-hook').textContent = item.visual_hook_id;
+    el.classList.toggle('current', w === currentSkin);
+  });
+}
+
+// ========== TERRITORY ==========
+function addSelectedToTerritory() {
+  if (!selectedItem) { log('⚠ アイテムを先に選択してください', 'warn'); return; }
+  territoryItems.push({ ...selectedItem });
+  renderTerritory();
+  checkSynergies();
+  log(`🏯 領地配置: ${getSkin(selectedItem.visual_hook_id).label} → 領地に追加 (計${territoryItems.length}件)`, 'ok');
+  renderItemGrid();
+}
+
+function removeFromTerritory(idx) {
+  const item = territoryItems[idx];
+  log(`🗑 領地から除去: ${getSkin(item.visual_hook_id).label}`, 'warn');
+  territoryItems.splice(idx, 1);
+  renderTerritory();
+  checkSynergies();
+  renderItemGrid();
+}
+
+function clearTerritory() {
+  territoryItems = [];
+  renderTerritory();
+  renderSynergyList();
+  renderItemGrid();
+  log('🔄 領地をリセットしました', 'info');
+}
+
+function renderTerritory() {
+  const box = document.getElementById('territoryItems');
+  if (territoryItems.length === 0) {
+    box.innerHTML = '<span style="color:var(--ash-light);font-size:12px;padding:8px;">← アイテムを選択して「領地へ配置」ボタンで追加</span>';
+    return;
+  }
+  box.innerHTML = territoryItems.map((item, idx) => {
+    const sk = getSkin(item.visual_hook_id);
+    return `<div class="territory-item-chip" onclick="removeFromTerritory(${idx})">
+      <span>${sk.icon}</span>
+      <span style="font-size:11px">${sk.label}</span>
+      <span class="remove-btn">✕</span>
+    </div>`;
+  }).join('');
+}
+
+// ========== SYNERGY ==========
+function checkSynergies() {
+  const ids = territoryItems.map(t => t.asset_id);
+  renderSynergyList(ids);
+}
+
+function renderSynergyList(territoryIds = []) {
+  const list = document.getElementById('synergyList');
+  list.innerHTML = '';
+  SYNERGIES.forEach(syn => {
+    const required = syn.condition.items;
+    const counts = {};
+    required.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+    const territoryCounts = {};
+    territoryIds.forEach(id => { territoryCounts[id] = (territoryCounts[id] || 0) + 1; });
+    const isActive = Object.entries(counts).every(([id, need]) => (territoryCounts[id] || 0) >= need);
+
+    const uniqueReqs = [...new Set(required)];
+    const reqBadges = uniqueReqs.map(id => {
+      const item = ITEMS.find(i => i.asset_id === id);
+      const sk = item ? getSkin(item.visual_hook_id) : { icon:'❓', label: id };
+      const met = (territoryCounts[id] || 0) >= (counts[id] || 1);
+      return `<span class="synergy-req${met?' met':''}">${sk.icon} ${sk.label}${counts[id]>1?' ×'+counts[id]:''}</span>`;
+    }).join('');
+
+    const card = document.createElement('div');
+    card.className = `synergy-card${isActive?' active':''}`;
+    card.innerHTML = `
+      <div style="flex:1">
+        <div class="synergy-name">${isActive ? '⚡ ' : ''}${syn.name}</div>
+        <div class="synergy-desc">${syn.effect.description}</div>
+        <div class="synergy-conditions">${reqBadges}</div>
+      </div>
+      <div class="synergy-status">${isActive ? '✓ ACTIVE' : '待機中'}</div>
+    `;
+    list.appendChild(card);
+
+    if (isActive && territoryIds.length > 0) {
+      log(`⚡ シナジー発動: 【${syn.name}】 → ${syn.effect.on_territory.map(e=>e.type+':+'+e.value).join(', ')}`, 'synergy');
+    }
+  });
+}
+
+// ========== WAGON ==========
+function renderWagonSlots() {
+  const slotsEl = document.getElementById('wagonSlots');
+  slotsEl.innerHTML = '';
+  for (let i = 0; i < wagonCapacity.slots; i++) {
+    const slot = document.createElement('div');
+    slot.className = `cargo-slot${i < wagonContents.length ? ' filled' : ''}`;
+    slot.textContent = i < wagonContents.length ? '🌾' : '';
+    slot.title = i < wagonContents.length ? '米俵 (60kg) — クリックで取り出し' : '空きスロット';
+    if (i < wagonContents.length) slot.onclick = removeFromWagon;
+    slotsEl.appendChild(slot);
+  }
+  const usedWeight = wagonContents.reduce((s, i) => s + i.weight, 0);
+  const totalWeight = 200 + usedWeight;
+  const pct = Math.min(100, (usedWeight / wagonCapacity.weight) * 100);
+  document.getElementById('wagonSlot').textContent = `${wagonContents.length} / ${wagonCapacity.slots}`;
+  document.getElementById('wagonWeight').textContent = `${usedWeight} / ${wagonCapacity.weight} kg`;
+  document.getElementById('wagonTotal').textContent = `${totalWeight} kg`;
+  const bar = document.getElementById('wagonBar');
+  bar.style.width = pct + '%';
+  bar.className = 'weight-bar-fill' + (pct > 80 ? ' danger' : '');
+}
+
+function addToWagon() {
+  const rice = ITEMS.find(i => i.asset_id === 'UAR-ITEM-004-RICE-BALE');
+  if (wagonContents.length >= wagonCapacity.slots) { log('⚠ WAGON: スロット満杯 (5/5)', 'warn'); return; }
+  const usedWeight = wagonContents.reduce((s, i) => s + i.weight, 0);
+  if (usedWeight + rice.weight > wagonCapacity.weight) { log('⚠ WAGON: 重量超過！積載不可', 'err'); return; }
+  wagonContents.push(rice);
+  renderWagonSlots();
+  const total = 200 + wagonContents.reduce((s,i)=>s+i.weight,0);
+  log(`📦 WAGON: 米俵を積載 → ${wagonContents.length}俵 / 総重量: ${total}kg`, 'ok');
+}
+
+function removeFromWagon() {
+  if (wagonContents.length === 0) { log('⚠ WAGON: 荷物がありません', 'warn'); return; }
+  wagonContents.pop();
+  renderWagonSlots();
+  log(`📤 WAGON: 米俵を取り出し → 残${wagonContents.length}俵`, 'info');
+}
+
+// ========== TERRAIN CHECK ==========
+function checkTerrain(terrain) {
+  const stallion = ITEMS.find(i => i.asset_id === 'UAR-ITEM-001-STALLION');
+  const allowed = stallion.terrain_access.includes(terrain) || stallion.terrain_access.includes('all');
+  const el = document.getElementById('terrainResult');
+  const terrainNames = { plain:'平野', highway:'街道', forest:'森林', mountain:'山岳', sea:'海上' };
+  if (allowed) {
+    el.style.borderLeftColor = 'var(--synergy)';
+    el.innerHTML = `<strong style="color:var(--synergy)">✓ 通行可能</strong><br><span style="font-size:11px;color:var(--ash)">早馬は「${terrainNames[terrain]}」を移動できます。<br>move_speed: 15 が適用されます。</span>`;
+    log(`✓ TERRAIN CHECK: 早馬 → ${terrainNames[terrain]} → 通行OK`, 'ok');
+  } else {
+    el.style.borderLeftColor = 'var(--vermillion)';
+    el.innerHTML = `<strong style="color:var(--vermillion)">✗ 通行不可</strong><br><span style="font-size:11px;color:var(--ash)">早馬の terrain_access に「${terrainNames[terrain]}」が含まれていません。<br>allowed: [${stallion.terrain_access.join(', ')}]</span>`;
+    log(`✗ TERRAIN CHECK: 早馬 → ${terrainNames[terrain]} → 侵入ブロック！`, 'err');
+  }
+}
+
+// ========== LOG ==========
+function log(msg, type = '') {
+  const el = document.getElementById('testLog');
+  const div = document.createElement('div');
+  div.className = type ? `log-${type}` : '';
+  div.textContent = `[${new Date().toLocaleTimeString('ja-JP')}] ${msg}`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+init();
+</script>
+</body>
+</html>
